@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
@@ -100,19 +101,21 @@ class ImagePath(BaseModel):
     image_path: str
 
 @app.post("/analyze-image/", response_model=ImageInformation)
-async def analyze_image(file: UploadFile = File(...)):
-    try:
-        # Save the file to a temporary location
-        username = "test" #change the functionality later
-        storage_directory = f"data/{username}_files"
+async def analyze_image(files: List[UploadFile] = File(...)):
+    # Save the file to a temporary location
+    username = "test"  # Change the functionality later
+    storage_directory = f"data/{username}_files"
+    os.makedirs(storage_directory, exist_ok=True)
 
-        os.makedirs(storage_directory, exist_ok=True)
-
+    results = []
+    for file in files:
         await save_file_async(file, storage_directory)
         file_path = f"{storage_directory}/{file.filename}"
-
         result = get_image_informations(file_path)
-        
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        results.append({f"{file.filename}" : result})
+
+    return JSONResponse(content=results, status_code=200)
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/docs")
