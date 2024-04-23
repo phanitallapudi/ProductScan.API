@@ -9,7 +9,8 @@ from langchain_core.runnables import chain
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.pydantic_v1 import Field
 from langchain_openai import ChatOpenAI
-from pathlib import Path
+
+import requests
 import os
 import base64
 import aiofiles
@@ -17,8 +18,6 @@ import os
 
 load_dotenv()
 
-os.environ["AZURE_OPENAI_API_KEY"] = os.getenv('AZURE_OPENAI_API_KEY')
-os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv('AZURE_OPENAI_ENDPOINT')
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 class ImageInformation(BaseModel):
@@ -53,6 +52,24 @@ async def save_file_async(file, storage_directory):
     async with aiofiles.open(file_path, 'wb') as out_file:
         content = await file.read()
         await out_file.write(content)
+
+def translate_text(text, source_lang='english', target_lang='arabic', proxies=None):
+    endpoint = 'https://deep-translator-api.azurewebsites.net/google/'
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+    payload = {
+        'source': source_lang,
+        'target': target_lang,
+        'text': text,
+        'proxies': proxies if proxies else []
+    }
+    
+    response = requests.post(endpoint, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        return response.json().get('translation')
+    else:
+        print(f"Translation failed with status code {response.status_code}")
+        return None
 
 def load_image(inputs: dict) -> dict:
     """Load image from file and encode it as base64."""
@@ -107,14 +124,34 @@ async def analyze_image(files: List[UploadFile] = File(...)):
     storage_directory = f"data/{username}_files"
     os.makedirs(storage_directory, exist_ok=True)
 
-    results = []
+    en_results = []
+    ar_results = []
     for file in files:
         await save_file_async(file, storage_directory)
         file_path = f"{storage_directory}/{file.filename}"
         result = get_image_informations(file_path)
-        results.append({f"{file.filename}" : result})
+        en_results.append({f"{file.filename}" : result})
+    
+    for item in en_results:
+        translated_item = {}
+        for key, value in item.items():
+            translated_key = translate_text(key)
+            translated_value = {}
+            for field, text in value.items():
+                if isinstance(text, list):
+                    translated_text = [translate_text(t) for t in text]
+                    translated_value[translate_text(field)] = translated_text
+                else:
+                    translated_value[translate_text(field)] = translate_text(text)
+            translated_item[translated_key] = translated_value
+        ar_results.append(translated_item)
+    
+    response = {
+        "en" : en_results,
+        "ar" : ar_results
+    }
 
-    return JSONResponse(content=results, status_code=200)
+    return JSONResponse(content=response, status_code=200)
 
 @app.get("/")
 async def root():
