@@ -20,13 +20,13 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 class ImageInformation(BaseModel):
     """Information about an image."""
-    image_description: str = Field(description="a short description of the image")
-    calories: str = Field(description="total calories in the image")
-    fats: str = Field(description="total fats in the image")
-    sodium: str = Field(description="total sodium in the image")
-    added_sugar: str = Field(description="total added sugars in the image")
-    protein: str = Field(description="total protein in the image")
-    main_objects: List[str] = Field(description="list of the main objects on the picture")
+    product_name: str = Field(description="name of the product in the image")
+    company_name: str = Field(description="name of the company mentioned in the image")
+    quantity: str = Field(description="total quantity of the product in the image")
+    product_description: str = Field(description="product description of the image")
+    product_price: str = Field(description="product price mentioned in the image")
+    ingredients: List[str] = Field(description="list of ingredients used or contains in the image")
+    remarks: List[str] = Field(description="any other remarks mentioned in the image")
 
 
 async def save_file_async(file, storage_directory):
@@ -103,9 +103,13 @@ def image_model(inputs: dict) -> str | List[str] | dict:
 def get_image_informations(image_path: str) -> dict:
    vision_prompt = """
    Given the image, provide the following information:
-   - A count of how many people are in the image
-   - A list of the main objects present in the image
-   - A description of the image
+   - Product Name:
+   - Company Name:
+   - Quantity:
+   - Description: Explain the product in 1 line.
+   - Product Price:
+   - Ingredients/Contain
+   - Any other remarks
    """
    vision_chain = load_image_chain | image_model | parser
    return vision_chain.invoke({'image_path': f'{image_path}', 
