@@ -25,9 +25,9 @@ async def analyze_image(files: List[UploadFile] = File(...), current_user: User 
         file_path = f"{storage_directory}/{file.filename}"
         try:
             result = get_image_informations(file_path)
+            en_results.append({f"{file.filename}" : result})
         except Exception as e:
             en_results.append({f"message" : "Cannot able to process the request, please try again.."})
-        en_results.append({f"{file.filename}" : result})
     
     for item in en_results:
         translated_item = {}
