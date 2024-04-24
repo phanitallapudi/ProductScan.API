@@ -88,7 +88,7 @@ async def analyze_image(files: List[UploadFile] = File(...), current_user: User 
 @router.get("/get-file/")
 # async def get_file(file_path: str = Query(..., title="Query", description="Enter the question")):
 async def get_file(current_user: User = Depends(get_current_user)):
-    file_path = "products.csv"
+    file_path = "products.xlsx"
 
     # Check if the file exists
     if not os.path.exists(file_path):
