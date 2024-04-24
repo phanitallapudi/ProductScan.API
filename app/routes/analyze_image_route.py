@@ -9,6 +9,7 @@ from utils.file_utils import save_file_async
 
 import os
 import csv
+import openpyxl
 
 router = APIRouter()
 
@@ -65,11 +66,21 @@ async def analyze_image(files: List[UploadFile] = File(...), current_user: User 
                     ', '.join(product_details.get('remarks', []))
                 ])
 
-    # Writing to CSV
-    with open('products.csv', 'w', newline='', encoding='utf-8') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Product Name', 'Company Name', 'Quantity', 'Description', 'Price', 'Ingredients', 'Remarks'])
-        csv_writer.writerows(product_data)
+    # Create a new Excel workbook
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Products"
+
+    # Write header row
+    header_row = ['Product Name', 'Company Name', 'Quantity', 'Description', 'Price', 'Ingredients', 'Remarks']
+    sheet.append(header_row)
+
+    # Write data rows
+    for row in product_data:
+        sheet.append(row)
+
+    # Save the workbook
+    workbook.save('products.xlsx')
 
     return JSONResponse(content=response, status_code=200)
 
