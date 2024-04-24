@@ -23,7 +23,10 @@ async def analyze_image(files: List[UploadFile] = File(...), current_user: User 
     for file in files:
         await save_file_async(file, storage_directory)
         file_path = f"{storage_directory}/{file.filename}"
-        result = get_image_informations(file_path)
+        try:
+            result = get_image_informations(file_path)
+        except Exception as e:
+            en_results.append({f"message" : "Cannot able to process the request, please try again.."})
         en_results.append({f"{file.filename}" : result})
     
     for item in en_results:
