@@ -1,10 +1,11 @@
+from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain.chains import TransformChain
 from langchain_core.runnables import chain
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.pydantic_v1 import Field
 from langchain_openai import ChatOpenAI
 
 import requests
